@@ -54,58 +54,32 @@ from pyspark.sql import SparkSession
 spark = SparkSession.builder.appName("DataflowGraphExample").getOrCreate()
 sc = spark.sparkContext
 
-ANSWER_FILE = "output/part1-answers-temp.txt"
 
 def PART_1_PIPELINE_PARAMETRIC(N, P):
-    """
-    TODO: Follow the same logic as PART_1_PIPELINE
-    N = number of inputs
-    P = parallelism (number of partitions)
-    (You can copy the code here), but make the following changes:
-    - load_input should use an input of size N.
-    - load_input_bigger (including q8_a and q8_b) should use an input of size N.
-    - both of these should return an RDD with level of parallelism P (number of partitions = P).
-    """ 
-    open(ANSWER_FILE, 'w').close()
-
-    try:
-        dfs = load_input(N,P)
-    except NotImplementedError:
-        print("Welcome to Part 1! Implement load_input() to get started.")
-        dfs = sc.parallelize([], P or 1)
-
-    # Questions 1-3
-    log_answer("q1", q1)
-    log_answer("q2", q2)
-    # 3: commentary
-
-    # Questions 4-10
-    log_answer("q4", q4, dfs)
-    log_answer("q5", q5, dfs)
-    log_answer("q6", q6, dfs)
-    log_answer("q7", q7, dfs)
+    data = load_input_bigger(N, P)
+    
+    log_answer("q4", q4, data)
+    log_answer("q5", q5, data)
+    log_answer("q6", q6, data)
+    log_answer("q7", q7, data)
     log_answer("q8a", q8_a, N, P)
     log_answer("q8b", q8_b, N, P)
-    # 9: commentary
-    # 10: commentary
 
-    # Questions 11-18
-    log_answer("q11", q11, dfs)
-    # 12: commentary
-    # 13: commentary
-    log_answer("q14", q14, dfs)
-    # 15: commentary
+    log_answer("q11", q11, data)
+    log_answer("q14", q14, data)
     log_answer("q16a", q16_a)
     log_answer("q16b", q16_b)
     log_answer("q16c", q16_c)
-    # 17: commentary
-    # 18: commentary
-
-    # Questions 19-20
-    # 19: commentary
     log_answer("q20", q20)
 
-    return "done"
+def q8_a(N=None, P=None):
+    data = load_input_bigger(N, P)
+    return q6(data)
+
+def q8_b(N=None, P=None):
+    data = load_input_bigger(N, P)
+    return q7(data)
+
 
 """
 === Coding part 2: measuring the throughput and latency ===
@@ -222,6 +196,7 @@ class LatencyHelper:
             self.latencies.append(latency_ms)
         return self.latencies
 
+# Insert code to generate plots here as needed
     def generate_plot(self, filename):
         plt.figure()
         plt.bar(self.names, self.latencies, color="blue")
@@ -230,8 +205,6 @@ class LatencyHelper:
         plt.xticks(rotation=45)
         plt.savefig(filename)
         plt.close() 
-
-# Insert code to generate plots here as needed
 
 """
 === Reflection part ===
@@ -249,6 +222,7 @@ how should throughput and latency change when we double the amount of parallelis
 
 Please ignore pipeline and task parallelism for this question.
 The parallelism we care about here is data parallelism.
+
 
 2. In practice, does the expectation from question 1
 match the performance you see on the actual measurements? Why or why not?

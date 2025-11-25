@@ -1,0 +1,50 @@
+1. Given only the dataflow graph and data parallelism, we expect performance to improve as
+parallelism increases. For throughput, doubling the amount of paralellism should double the throughput.
+As for latency, we expect it to halve, assumming no extra overhead. Doubling the parallelism results in 
+a linear increase in throughput and an inverse change for latency. 
+
+2. In practice, does the expectation from question 1
+match the performance you see on the actual measurements? Why or why not?
+
+State specific numbers! What was the expected throughput and what was the observed?
+What was the expected latency and what was the observed?
+
+
+2. (I used GPT to help determine the expected throughputs & latencies)
+In practice, the expectation from question one does not match the performance in the actual
+measurements. The theoretical throughput and latency we predicted from earlier did not consider 
+overheads in Spark and Python. For N = 1,000,000, if the base throughput at parallelism 1 was 
+~37,500 items/sec, at parallelism 2 we would expect ~75,000 items/sec, and at parallelism 4 
+we would expect ~150,000 items/sec. However, the actual throughput at parallelism 2 was ~70,000 items/sec, 
+at parallelism 4 it was ~100,000 items/sec, at parallelism 8 it was ~60,000 items/sec, and at parallelism 
+16 it was ~65,000 items/sec. This is noticeably lower than the theoretical linear scaling. significantly 
+lower than what was expected. If latency at parallelism 1 was ~55,000 ms, we expect 
+~27,500 ms at parallelism 2, and ~13,750 ms at parallelism 4. The measured latency at parallelism 2 
+was ~28,000 ms, at parallelism 4 it was ~24,800 ms, at parallelism 8 it was ~27,000 ms, and at 
+parallelism 16 it was ~27,500 ms, which is higher than expected for higher parallelism levels.
+
+3. Finally, use your answers to Q1-Q2 to form a conjecture
+as to what differences there are (large or small) between
+the theoretical model and the actual runtime.
+Name some overheads that might be present in the pipeline
+that are not accounted for by our theoretical model of
+dataflow graphs that could affect performance.
+
+You should list an explicit conjecture in your reflection, like this:
+
+    Conjecture: I conjecture that ....
+
+You may have different conjectures for different parallelism cases.
+For example, for the parallelism=4 case vs the parallelism=16 case,
+if you believe that different overheads are relevant for these different scenarios.
+
+I conjecture that the differences between the theoretical model and the actual runtime is due to 
+overheads not captured by the simple dataflow graph model. For the lower parallelism levels such as
+P = 1, 2, and 4, the measured throughputs and latencies follow what we expected, however stray a bit from
+expected trends due to Python execution time and Spark task scheduling overhead. For the higher parallelisms, 
+P = 8 and 16, the throughputs do not scale linearly. In addition, the latencies stop decreasing as expected. 
+The results suggest that high parallelism can introduce various overheads such as task coordination, 
+data shuffling between partitions, inter-worker communication, and 
+Python-specific serialization/deserialization costs, which offset the 
+benefits of multiple partitions. These factors explain why observed performance 
+differs from the theoretical model.

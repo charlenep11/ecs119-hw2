@@ -68,7 +68,7 @@ def general_map(rdd, f):
     f: a function (k1, v1) -> List[(k2, v2)]
     output: an RDD with values of type (k2, v2)
     """
-    return rdd.flatMap(lambda kv: f(kv[0], kv[1])) # using flatmap to flatten list into single RDD
+    return rdd.flatMap(lambda kv: f(kv[0], kv[1]))
 
 def test_general_map():
     rdd = sc.parallelize(["cat", "dog", "cow", "zebra"])
@@ -148,7 +148,8 @@ def q2():
 and keys for Reduce be different might be useful.
 
 === ANSWER Q3 BELOW ===
-An example of this can be a company tracking sales. They start by mapping sales per country to the key country, then they combine all the sales for each country to get total sales in the reduce stage. 
+An example of this can be a company tracking sales. They start by mapping sales per country to the key country, 
+then they combine all the sales for each country to get total sales in the reduce stage. 
 === END OF Q3 ANSWER ===
 """
 
@@ -164,24 +165,15 @@ set of integers between 1 and 1 million (inclusive).
 """
 
 """ 
-* ORIGINAL PART 1 FUNC!
+* ORIGINAL PART 1 FUNCTION
 def load_input():
     # Return a parallelized RDD with the integers between 1 and 1,000,000
     # This will be referred to in the following questions.
-    return sc.parallelize(range(1, 1000001)) # creates RDD that Spark prcoess in parallel
+    return sc.parallelize(range(1, 1000001)) 
 """
-# NEW PART 3 FUNC
-def load_input(N = None, P = None):
-    # Return a parallelized RDD with the integers between 1 and 1,000,000
-    # This will be referred to in the following questions.
-    if N is None: 
-        return sc.parallelize(range(1, 1000001)) # creates RDD that Spark prcoess in parallel
-    
-    if P is None: 
-        return sc.parallelize(range(1, N+1))
-    else:
-        return sc.parallelize(range(1, N+1), P)
-
+# NEW PART 3 FUNCTION
+def load_input():
+    return sc.parallelize(range(1, 1000001)) # make Spark RDD of ints between 1-1,000,000
 
 
 def q4(rdd):
@@ -226,7 +218,7 @@ def q6(rdd):
     # Input: the RDD from Q4
     # Output: a tuple (most common digit, most common frequency, least common digit, least common frequency)
     digit_paired = general_map(rdd.map(lambda x: (None, x)), lambda k, v: [(d, 1) for d in str(v)]) # gives RDD of (digit, 1)
-    digit_counts = general_reduce(digit_paired, lambda a, b: a + b) # reduce by digit to get frequency
+    digit_counts = general_reduce(digit_paired, lambda a, b: a + b) # reduce by digit to get freq.
     counts = digit_counts.collect() 
     # find most and least common digits
     most_common = max(counts, key = lambda x: x[1])
@@ -275,73 +267,69 @@ Notes:
 """
 
 # *** Define helper function(s) here ***
-#helper func to convert basic nums into words
-def num_to_word(n):
-    if n == 0:
-        return "zero"
-    if n == 1000000:
-        return "one million"
 
-    ones = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
-    teens = ["ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen",
-             "sixteen", "seventeen", "eighteen", "nineteen"]
-    tens = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
-
-    # Helper for nums 0-999
-    def three_digit_nums(num):
-        word = ""
-        h = num // 100
-        t = num % 100
-        if h > 0:
-            word += ones[h] + " hundred"
-            if t > 0:
-                word += " and "
-        if 10 <= t <= 19:
-            word += teens[t-10]
-        else:
-            if t >= 20:
-                word += tens[t//10]
-                if t % 10 > 0:
-                    word += " " + ones[t % 10]
-            elif t > 0:
-                word += ones[t]
-        return word.strip()
-
-    # Numbers >= 1000
-    if n >= 1000:
-        thousands = n // 1000
-        remainder = n % 1000
-        if thousands > 999:  # prevent IndexError
-            thousands = 999
-        result = three_digit_nums(thousands) + " thousand"
-        if remainder > 0:
-            result += " " + three_digit_nums(remainder)
-    else:
-        result = three_digit_nums(n)
-
-    return result.strip()
-
-
+# moved the helpers into q7 function to avoid PySparkRuntimeError 
 def q7(rdd):
-    # Input: the RDD from Q4
-    # Output: a tulpe (most common char, most common frequency, least common char, least common frequency)
-    
-    #map nums to letters
-    letters_RDD = general_map(rdd.map(lambda x: (None, x)), lambda k, v: [(char, 1) for char in num_to_word(v).replace(" ", " ").replace("-", "")])
+    def num_to_word(n): 
+        
+        # unique numbers to words
+        if n == 0:
+            return "zero"
+        if n == 1000000:
+            return "one million"
 
-    #reduce by letter to count frequency
-    letter_counts = general_reduce(letters_RDD, lambda a, b: a + b)
+        # make each digit place a list to index
+        ones = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"] 
+        teens = ["ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen",
+                 "sixteen", "seventeen", "eighteen", "nineteen"]
+        tens = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
+
+        def three_digit_nums(num):
+            word = ""
+            h = num // 100 #extract hundredths place
+            t = num % 100 #extract tenths place 
+            
+            # assigning h and t to a word from list
+            if h > 0: 
+                word += ones[h] + " hundred"
+                if t > 0:
+                    word += " and "
+            if 10 <= t <= 19:
+                word += teens[t-10]
+            else:
+                if t >= 20:
+                    word += tens[t//10]
+                    if t % 10 > 0:
+                        word += " " + ones[t % 10]
+                elif t > 0:
+                    word += ones[t]
+            return word.strip()
+
+        # assigning words to thousandths place
+        if n >= 1000:
+            thousands = n // 1000
+            remainder = n % 1000
+            if thousands > 999:
+                thousands = 999
+            result = three_digit_nums(thousands) + " thousand"
+            if remainder > 0:
+                result += " " + three_digit_nums(remainder)
+        else:
+            result = three_digit_nums(n)
+
+        return result.strip()
+
+    letters_rdd = general_map(
+        rdd.map(lambda x: (None, x)),
+        lambda k, v: [(c, 1) for c in num_to_word(v).replace(" ", "").replace("-", "")]
+    )
+    letter_counts = general_reduce(letters_rdd, lambda a, b: a + b)
     counts = letter_counts.collect()
+    most = max(counts, key=lambda x: x[1])
+    least = min(counts, key=lambda x: x[1])
+    return (most[0], most[1], least[0], least[1])
 
-    #find most & least common
-    most_common = max(counts, key = lambda x: x[1])
-    most_common_letter = most_common[0]
-    most_common_frequency = most_common[1]
-    least_common = min(counts, key = lambda x: x[1])
-    least_common_letter = least_common[0]
-    least_common_frequency = least_common[1]
 
-    return(most_common_letter, most_common_frequency, least_common_letter, least_common_frequency)
 
 """
 8. Does the answer change if we have the numbers from 1 to 100,000,000?
@@ -366,30 +354,44 @@ Notes:
 def load_input_bigger():
     return sc.parallelize(range(1, 10000001), numSlices = 100)
 """
-
+#NEW PART 3 FUNC
 def load_input_bigger(N = None, P = None):
-    if N is None: 
-        return sc.parallelize(range(1, 10000001), numSlices=100)
+    if N is None:
+        return sc.parallelize(range(1, 100000001), numSlices=100)
     if P is None:
         return sc.parallelize(range(1, N+1))
     else:
         return sc.parallelize(range(1, N+1), P)
 
-def q8_a(N = None, P = None):
+""" 
+*ORIGINAL Q8 a and b
+def q8_a():
     # version of Q6
     # It should call into q6() with the new RDD!
     # Don't re-implemented the q6 logic.
     # Output: a tuple (most common digit, most common frequency, least common digit, least common frequency)
-    rdd = load_input_bigger(N, P)
+    # rdd = load_input_bigger(N, P)
+    rdd = load_input_bigger() 
     return q6(rdd)
 
-def q8_b(N = None, P = None):
+def q8_b():
     # version of Q7
     # It should call into q7() with the new RDD!
     # Don't re-implemented the q6 logic.
     # Output: a tulpe (most common char, most common frequency, least common char, least common frequency)
+    #rdd = load_input_bigger(N, P)
+    rdd = load_input_bigger()
+    return q7(rdd)
+"""
+# NEW PART 3 Q8 a and b
+def q8_a(N = None, P = None):
+    rdd = load_input_bigger(N, P)
+    return q6(rdd)
+
+def q8_b(N = None, P = None):
     rdd = load_input_bigger(N, P)
     return q7(rdd)
+
 
 """
 Discussion questions
@@ -438,10 +440,10 @@ your answer should return a Python set of (key, value) pairs after the reduce st
 def q11(rdd):
     # Input: the RDD from Q4
     # Output: the result of the pipeline, a set of (key, value) pairs
-    kv_RDD = rdd.map(lambda x: (None, x)) # wrap ea element as a key, value tuple
-    mapped_RDD = general_map(kv_RDD, lambda k, v : []) # ret empty list for each input
+    kv_RDD = rdd.map(lambda x: (None, x)) # wrap each element as a tuple
+    mapped_RDD = general_map(kv_RDD, lambda k, v : []) # return empty list for each input
     reduced_RDD = general_reduce(mapped_RDD, lambda a, b: a + b) # reduce stage = no output b/c map produced nothing
-    return set(reduced_RDD.collect()) #get results as a set of key value pairs
+    return set(reduced_RDD.collect()) #return set of key value pairs
 
 
 
@@ -509,20 +511,20 @@ Write three functions, a, b, and c that use different levels of parallelism.
 def q16_a():
     # For this one, create the RDD yourself. Choose the number of partitions.
     # RDD with 2 partitions
-        data = [(0,10), (1, 20), (3, 30), (4, 40), (5, 50)]
-        rdd = sc.parallelize(data, 2)
-        mapped_RDD = general_map(rdd, lambda k, v: [(1, v)])
-        reduced_RDD = general_reduce(mapped_RDD, lambda a, b: a - b)
-        return set(reduced_RDD.collect())
+    data = [(0,10), (1, 20), (3, 30), (4, 40), (5, 50)]
+    rdd = sc.parallelize(data, 2)
+    mapped_RDD = general_map(rdd, lambda k, v: [(1, v)])
+    reduced_RDD = general_reduce(mapped_RDD, lambda a, b: a - b)
+    return set(reduced_RDD.collect())
 
 def q16_b():
     # For this one, create the RDD yourself. Choose the number of partitions.
     # RDD with 4 partitions
-        data = [(0,10), (1, 20), (3, 30), (4, 40), (5, 50)]
-        rdd = sc.parallelize(data, 4)
-        mapped_RDD = general_map(rdd, lambda k, v: [(1, v)])
-        reduced_RDD = general_reduce(mapped_RDD, lambda a, b: a - b)
-        return set(reduced_RDD.collect())
+    data = [(0,10), (1, 20), (3, 30), (4, 40), (5, 50)]
+    rdd = sc.parallelize(data, 4)
+    mapped_RDD = general_map(rdd, lambda k, v: [(1, v)])
+    reduced_RDD = general_reduce(mapped_RDD, lambda a, b: a - b)
+    return set(reduced_RDD.collect())
 
 def q16_c():
         #RDD with 6 partitions
@@ -580,13 +582,9 @@ def q20():
     
     data = [("row1", 10), ("row2", 20), ("row3", 30)] # create RDD (cannot put as arg)
     rdd = sc.parallelize(data, 3)
-
     mapped_RDD = general_map(rdd, lambda k, v: [(1, v)])
-
     reduced_RDD = general_reduce(mapped_RDD, lambda old, new: new) # overwrting old val
-
     reduced_RDD.collect()
-
     return True
 
 
@@ -594,8 +592,6 @@ def q20():
 That's it for Part 1!
 
 ===== Wrapping things up =====
-
-**Don't modify this part.**
 
 To wrap things up, we have collected
 everything together in a pipeline for you below.
@@ -620,6 +616,10 @@ def log_answer(name, func, *args):
         global UNFINISHED
         UNFINISHED += 1
 
+    # Create SparkSession and SparkContext **only when running this module directly**
+    spark = SparkSession.builder.appName("DataflowGraphExample").getOrCreate()
+    sc = spark.sparkContext
+
 def PART_1_PIPELINE():
     open(ANSWER_FILE, 'w').close()
 
@@ -628,6 +628,7 @@ def PART_1_PIPELINE():
     except NotImplementedError:
         print("Welcome to Part 1! Implement load_input() to get started.")
         dfs = sc.parallelize([])
+
 
     # Questions 1-3
     log_answer("q1", q1)
