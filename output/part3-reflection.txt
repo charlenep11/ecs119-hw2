@@ -3,13 +3,6 @@ parallelism increases. For throughput, doubling the amount of paralellism should
 As for latency, we expect it to halve, assumming no extra overhead. Doubling the parallelism results in 
 a linear increase in throughput and an inverse change for latency. 
 
-2. In practice, does the expectation from question 1
-match the performance you see on the actual measurements? Why or why not?
-
-State specific numbers! What was the expected throughput and what was the observed?
-What was the expected latency and what was the observed?
-
-
 2. (I used GPT to help determine the expected throughputs & latencies)
 In practice, the expectation from question one does not match the performance in the actual
 measurements. The theoretical throughput and latency we predicted from earlier did not consider 
@@ -23,22 +16,7 @@ lower than what was expected. If latency at parallelism 1 was ~55,000 ms, we exp
 was ~28,000 ms, at parallelism 4 it was ~24,800 ms, at parallelism 8 it was ~27,000 ms, and at 
 parallelism 16 it was ~27,500 ms, which is higher than expected for higher parallelism levels.
 
-3. Finally, use your answers to Q1-Q2 to form a conjecture
-as to what differences there are (large or small) between
-the theoretical model and the actual runtime.
-Name some overheads that might be present in the pipeline
-that are not accounted for by our theoretical model of
-dataflow graphs that could affect performance.
-
-You should list an explicit conjecture in your reflection, like this:
-
-    Conjecture: I conjecture that ....
-
-You may have different conjectures for different parallelism cases.
-For example, for the parallelism=4 case vs the parallelism=16 case,
-if you believe that different overheads are relevant for these different scenarios.
-
-I conjecture that the differences between the theoretical model and the actual runtime is due to 
+3.I conjecture that the differences between the theoretical model and the actual runtime is due to 
 overheads not captured by the simple dataflow graph model. For the lower parallelism levels such as
 P = 1, 2, and 4, the measured throughputs and latencies follow what we expected, however stray a bit from
 expected trends due to Python execution time and Spark task scheduling overhead. For the higher parallelisms, 
